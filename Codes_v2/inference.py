@@ -83,8 +83,8 @@ with tf.compat.v1.Session(config=config) as sess:
             input1 = input1[0]
             
             # calculate psnr/ssim
-            psnr = skimage.measure.compare_psnr(input1*final_warp_one, final_warp*final_warp_one, 255)
-            ssim = skimage.measure.compare_ssim(input1*final_warp_one, final_warp*final_warp_one, data_range=255, multichannel=True)
+            psnr = skimage.metrics.peak_signal_noise_ratio(input1*final_warp_one, final_warp*final_warp_one, data_range=255)
+            ssim = skimage.metrics.structural_similarity(input1*final_warp_one, final_warp*final_warp_one, data_range=255, multichannel=True)
             
             # image fusion
             img1 = input1
