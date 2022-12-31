@@ -3,7 +3,7 @@ import numpy as np
 import tf_slim as slim
 from tensorDLT import solve_DLT
 from tf_spatial_transform import transform
-from tensorflow.contrib.layers import conv2d
+from tf_slim import conv2d
 import tf_spatial_transform_local
 
 import constant
