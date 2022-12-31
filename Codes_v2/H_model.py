@@ -115,26 +115,26 @@ def feature_extractor(image_tf):
       maxpool3 = slim.max_pool2d(conv3, 2, stride=2, padding = 'SAME')
     with tf.compat.v1.variable_scope('conv_block4'):
       conv4 = _conv_block(maxpool3, ([128, 128]), (3, 3), (1, 1))    #64
-      conv1_r64 = tf.image.resize(conv1, [64, 64], method=0)
-      conv2_r64 = tf.image.resize(conv2, [64, 64], method=0)
-      conv3_r64 = tf.image.resize(conv3, [64, 64], method=0)
+      conv1_r64 = tf.image.resize(conv1, [64, 64], method=tf.image.ResizeMethod.BILINEAR)
+      conv2_r64 = tf.image.resize(conv2, [64, 64], method=tf.image.ResizeMethod.BILINEAR)
+      conv3_r64 = tf.image.resize(conv3, [64, 64], method=tf.image.ResizeMethod.BILINEAR)
       feature.append(tf.concat([conv4, conv1_r64, conv2_r64, conv3_r64], 3))
       maxpool4 = slim.max_pool2d(conv4, 2, stride=2, padding = 'SAME')
     with tf.compat.v1.variable_scope('conv_block5'):
       conv5 = _conv_block(maxpool4, ([256, 256]), (3, 3), (1, 1))    #32
-      conv1_r32 = tf.image.resize(conv1, [32, 32], method=0)
-      conv2_r32 = tf.image.resize(conv2, [32, 32], method=0)
-      conv3_r32 = tf.image.resize(conv3, [32, 32], method=0)
-      conv4_r32 = tf.image.resize(conv4, [32, 32], method=0)
+      conv1_r32 = tf.image.resize(conv1, [32, 32], method=tf.image.ResizeMethod.BILINEAR)
+      conv2_r32 = tf.image.resize(conv2, [32, 32], method=tf.image.ResizeMethod.BILINEAR)
+      conv3_r32 = tf.image.resize(conv3, [32, 32], method=tf.image.ResizeMethod.BILINEAR)
+      conv4_r32 = tf.image.resize(conv4, [32, 32], method=tf.image.ResizeMethod.BILINEAR)
       feature.append(tf.concat([conv5, conv1_r32, conv2_r32, conv3_r32, conv4_r32], 3))
       maxpool5 = slim.max_pool2d(conv5, 2, stride=2, padding = 'SAME')
     with tf.compat.v1.variable_scope('conv_block6'):                                      
       conv6 = _conv_block(maxpool5, ([256, 256]), (3, 3), (1, 1))    #16
-      conv1_r16 = tf.image.resize(conv1, [16, 16], method=0)
-      conv2_r16 = tf.image.resize(conv2, [16, 16], method=0)
-      conv3_r16 = tf.image.resize(conv3, [16, 16], method=0)
-      conv4_r16 = tf.image.resize(conv4, [16, 16], method=0)
-      conv5_r16 = tf.image.resize(conv5, [16, 16], method=0)
+      conv1_r16 = tf.image.resize(conv1, [16, 16], method=tf.image.ResizeMethod.BILINEAR)
+      conv2_r16 = tf.image.resize(conv2, [16, 16], method=tf.image.ResizeMethod.BILINEAR)
+      conv3_r16 = tf.image.resize(conv3, [16, 16], method=tf.image.ResizeMethod.BILINEAR)
+      conv4_r16 = tf.image.resize(conv4, [16, 16], method=tf.image.ResizeMethod.BILINEAR)
+      conv5_r16 = tf.image.resize(conv5, [16, 16], method=tf.image.ResizeMethod.BILINEAR)
       feature.append(tf.concat([conv6, conv1_r16, conv2_r16, conv3_r16, conv4_r16, conv5_r16], 3))
     
     return feature
