@@ -7,6 +7,7 @@ from models import H_estimator
 from utils import DataLoader, load, save
 import constant
 import skimage
+import glob
 tf.compat.v1.disable_eager_execution()
 
 os.environ['CUDA_DEVICES_ORDER'] = "PCI_BUS_ID"
@@ -62,7 +63,7 @@ with tf.compat.v1.Session(config=config) as sess:
         print(ckpt)
         load(loader, sess, ckpt)
         print("============")
-        length = 1106
+        length = len(glob.glob(os.path.join(test_folder, 'input1/*.jpg')))
         psnr_list = []
         ssim_list = []
 
@@ -138,18 +139,20 @@ with tf.compat.v1.Session(config=config) as sess:
         print("===================Results Analysis==================")   
         print("psnr")
         psnr_list.sort(reverse = True)
-        psnr_list_30 = psnr_list[0 : 331]
-        psnr_list_60 = psnr_list[331: 663]
-        psnr_list_100 = psnr_list[663: -1]
+        data_30 = int(length*0.3)
+        data_60 = int(length*0.6)
+        psnr_list_30 = psnr_list[0 : data_30]
+        psnr_list_60 = psnr_list[data_30: data_60]
+        psnr_list_100 = psnr_list[data_60: -1]
         print("top 30%", np.mean(psnr_list_30))
         print("top 30~60%", np.mean(psnr_list_60))
         print("top 60~100%", np.mean(psnr_list_100))
         print('average psnr:', np.mean(psnr_list))
         
         ssim_list.sort(reverse = True)
-        ssim_list_30 = ssim_list[0 : 331]
-        ssim_list_60 = ssim_list[331: 663]
-        ssim_list_100 = ssim_list[663: -1]
+        ssim_list_30 = ssim_list[0 : data_30]
+        ssim_list_60 = ssim_list[data_30: data_60]
+        ssim_list_100 = ssim_list[data_60: -1]
         print("top 30%", np.mean(ssim_list_30))
         print("top 30~60%", np.mean(ssim_list_60))
         print("top 60~100%", np.mean(ssim_list_100))
