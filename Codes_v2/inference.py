@@ -104,13 +104,9 @@ with tf.compat.v1.Session(config=config) as sess:
             img1 = input1
             img2 = final_warp*final_warp_one
             fusion = np.zeros((512,512,3), np.uint8)
-            mask1 = np.zeros((512,512,1), np.uint8)
-            mask2 = np.zeros((512,512,1), np.uint8)
+            mask1 = np.ones((512,512,1), np.uint8)*255
+            mask2 = final_warp_one*255
 
-            gray1 = cv.cvtColor(img1, cv.COLOR_BGR2GRAY)
-            gray2 = cv.cvtColor(img2, cv.COLOR_BGR2GRAY)
-            mask1[gray1>1]=255
-            mask2[gray2>1]=255
             # image for other model
             cv.imwrite(out_path+"mask1/"+str(i+1).zfill(6) + ".jpg", mask1)
             cv.imwrite(out_path+"mask2/"+str(i+1).zfill(6) + ".jpg", mask2)
