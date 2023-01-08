@@ -38,7 +38,7 @@ print("test_depth.shape")
 print(test_depth.shape)
 with tf.compat.v1.variable_scope('generator', reuse=None):
     print('testing = {}'.format(tf.compat.v1.get_variable_scope().name))
-    test_warp2_depth, test_mesh, test_warp2_H1, test_warp2_H2, test_warp2_H3, test_one_warp_H1, test_one_warp_H2, test_one_warp_H3 = H_estimator(test_inputs, test_inputs, test_depth)
+    test_warp2_depth, test_mesh, test_warp2_H1, test_warp2_H2, test_warp2_H3, test_one_warp_H1, test_one_warp_H2, test_one_warp_H3,test_H1_mat,test_H2_mat = H_estimator(test_inputs, test_inputs, test_depth)
     
 
 
@@ -75,52 +75,96 @@ with tf.compat.v1.Session(config=config) as sess:
             os.makedirs(out_path+"mask1")
         if not os.path.exists(out_path+"mask2"):
             os.makedirs(out_path+"mask2")
+        if not os.path.exists(out_path+"mask3"):
+            os.makedirs(out_path+"mask3")
         if not os.path.exists(out_path+"warp1"):
             os.makedirs(out_path+"warp1")
         if not os.path.exists(out_path+"warp2"):
             os.makedirs(out_path+"warp2")
+        if not os.path.exists(out_path+"warp3"):
+            os.makedirs(out_path+"warp3")
+
 
         for i in range(0, length):
             input_clip = np.expand_dims(data_loader.get_data_clips(i), axis=0)
+            #chop input1 left,input2 right 60%
+            ratio = 0.7
+            chop_input_clip = input_clip.copy()
+            input1 = (input_clip[0,...,0:3]+1) * 127.5  
+            input2 = cv.resize((input_clip[0,...,3:6]+1) * 127.5,(int(512/(1-ratio)),512))  
+
+            chop_input_clip[0,...,0:3] = cv.resize(chop_input_clip[0,...,int(512*ratio):,0:3],(512,512))
+            chop_input_clip[0,...,3:6] = cv.resize(chop_input_clip[0,...,:int(512*(1-ratio)),3:6],(512,512))
+
+            chop_input1 = (chop_input_clip[0,...,0:3]+1) * 127.5
+            chop_input2 = (chop_input_clip[0,...,3:6]+1) * 127.5
             
             #Attention: both inputs and outpus are the types of numpy, that is :(preH, warp_gt) and (input_clip,h_clip)
-            _, mesh, warp_H1, warp_H2, warp_H3, warp_one_H1, warp_one_H2, warp_one_H3 = sess.run([test_warp2_depth, test_mesh, test_warp2_H1, test_warp2_H2, test_warp2_H3, test_one_warp_H1, test_one_warp_H2, test_one_warp_H3], 
-                    feed_dict={test_inputs_clips_tensor: input_clip})
+            _, mesh, warp_H1, warp_H2, warp_H3, warp_one_H1, warp_one_H2, warp_one_H3,H1_mat,H2_mat = sess.run([test_warp2_depth, test_mesh, test_warp2_H1, test_warp2_H2, test_warp2_H3, test_one_warp_H1, test_one_warp_H2, test_one_warp_H3,test_H1_mat,test_H2_mat], 
+                    feed_dict={test_inputs_clips_tensor: chop_input_clip})
             
+
+
             # warp  = warp_H3
             final_warp = (warp_H3+1) * 127.5    
             final_warp = final_warp[0] 
             # warp_one  = warp_one_H3
             final_warp_one = warp_one_H3[0]
-            # input1
-            input1 = (input_clip[...,0:3]+1) * 127.5    
-            input1 = input1[0]
             
             # calculate psnr/ssim
-            psnr = skimage.metrics.peak_signal_noise_ratio(input1*final_warp_one, final_warp*final_warp_one, data_range=255)
-            ssim = skimage.metrics.structural_similarity(input1*final_warp_one, final_warp*final_warp_one, data_range=255, multichannel=True)
+            psnr = skimage.metrics.peak_signal_noise_ratio(chop_input1*final_warp_one, final_warp*final_warp_one, data_range=255)
+            ssim = skimage.metrics.structural_similarity(chop_input1*final_warp_one, final_warp*final_warp_one, data_range=255, multichannel=True)
             
             # image fusion
-            img1 = input1
+            img1 = cv.copyMakeBorder(input1, 0,0,0,512, cv.BORDER_CONSTANT, value=0)
             img2 = final_warp*final_warp_one
-            fusion = np.zeros((512,512,3), np.uint8)
-            mask1 = np.ones((512,512,1), np.uint8)*255
+            fusion = np.zeros((512,1024,3), np.uint8)
+            mask1 = np.ones((512,1024,1), np.uint8)*255
             mask2 = final_warp_one*255
+
+            H1_mat = np.linalg.inv(H1_mat[0])
+            H2_mat = np.linalg.inv(H2_mat[0])
+
+            border = np.array([[[0.,0.],[0.,512.],[512./(1-ratio),512.],[512./(1-ratio),0.]]])
+            border1 = cv.perspectiveTransform(border,H2_mat)[0]
+            xmin,ymin=np.min(border1,axis=0)
+            xmax,ymax=np.max(border1,axis=0)
+            size = (int(max(xmax,512)),int(max(ymax,512)))
+            input2_warp_H1 = cv.warpPerspective(input2, H2_mat, size)
+            input2_warp_one_H1 = cv.warpPerspective(np.ones((512,int(512/(1-ratio)),3))*255, H2_mat, size)
+            #reszie to original size
+            img2 = cv.resize(img2,(int(512*(1-ratio)),512))
+            mask2 = cv.resize(mask2,(int(512*(1-ratio)),512))
+            input2_warp_H1 = cv.resize(input2_warp_H1,(int(input2_warp_H1.shape[1]*(1-ratio)),input2_warp_H1.shape[0]))
+            input2_warp_one_H1 = cv.resize(input2_warp_one_H1,(int(input2_warp_H1.shape[1]*(1-ratio)),input2_warp_H1.shape[0]))
+
+            #padding
+            pad_img2 = np.zeros((512,1024,3))
+            pad_img2[:,int(512*ratio):int(512*ratio)+img2.shape[1],:] = img2
+            pad_mask2 = np.zeros((512,1024,3))
+            pad_mask2[:,int(512*ratio):int(512*ratio)+img2.shape[1],:] = mask2
+            right = 1024-input2_warp_H1.shape[1]-int(512*ratio)
+            if right<0:
+                right=0
+            input2_warp_H1=cv.copyMakeBorder(input2_warp_H1, 0,0,int(512*ratio),right, cv.BORDER_CONSTANT, value=0)
+            input2_warp_one_H1=cv.copyMakeBorder(input2_warp_one_H1, 0,0,int(512*ratio),right, cv.BORDER_CONSTANT, value=0)
+            
 
             # image for other model
             cv.imwrite(out_path+"mask1/"+str(i+1).zfill(6) + ".jpg", mask1)
-            cv.imwrite(out_path+"mask2/"+str(i+1).zfill(6) + ".jpg", mask2)
+            cv.imwrite(out_path+"mask2/"+str(i+1).zfill(6) + ".jpg", pad_mask2)
+            cv.imwrite(out_path+"mask3/"+str(i+1).zfill(6) + ".jpg", input2_warp_one_H1[:512,:1024,:])
             cv.imwrite(out_path+"warp1/"+str(i+1).zfill(6) + ".jpg", img1)
-            cv.imwrite(out_path+"warp2/"+str(i+1).zfill(6) + ".jpg", img2)
-
+            cv.imwrite(out_path+"warp2/"+str(i+1).zfill(6) + ".jpg", pad_img2)
+            cv.imwrite(out_path+"warp3/"+str(i+1).zfill(6) + ".jpg", input2_warp_H1[:512,:1024,:])
             #better fusion not needed
                 #img2[gray2<=1]=img1[gray2<=1]
                 #cv.imwrite('img2/'+ str(i+1).zfill(6) + ".jpg", img2)
                 #alpha = 0.5
                 #fusion = cv.addWeighted(img1, alpha, img2, 1-alpha, 0.0)
 
-            fusion[...,0] = img2[...,0] 
-            fusion[...,1] = img1[...,1]*0.5 +  img2[...,1]*0.5
+            fusion[...,0] = pad_img2[...,0] 
+            fusion[...,1] = img1[...,1]*0.5 +  pad_img2[...,1]*0.5
             fusion[...,2] = img1[...,2]
             path = "../fusion/" + str(i+1).zfill(6) + ".jpg"
             cv.imwrite(path, fusion)

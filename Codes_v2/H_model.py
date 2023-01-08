@@ -83,7 +83,7 @@ def H_model(train_inputs_aug, train_inputs, train_depth, patch_size=512.):
     warp2_depth = tf.clip_by_value(warp2_depth,  0, 1)
 
     
-    return warp2_depth, mesh, warp2_H1, warp2_H2, warp2_H3, one_warp_H1, one_warp_H2, one_warp_H3
+    return warp2_depth, mesh, warp2_H1, warp2_H2, warp2_H3, one_warp_H1, one_warp_H2, one_warp_H3,H1,H2
 
 def _conv_block(x, num_out_layers, kernel_sizes, strides):
     conv1 = conv2d(inputs=x, num_outputs=num_out_layers[0], kernel_size=kernel_sizes[0], activation_fn=tf.nn.relu, scope='conv1')
