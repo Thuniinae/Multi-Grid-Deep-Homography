@@ -88,7 +88,7 @@ with tf.compat.v1.Session(config=config) as sess:
         for i in range(0, length):
             input_clip = np.expand_dims(data_loader.get_data_clips(i), axis=0)
             #chop input1 left,input2 right 60%
-            ratio = 0.7
+            ratio = 0.8
             chop_input_clip = input_clip.copy()
             input1 = (input_clip[0,...,0:3]+1) * 127.5  
             input2 = cv.resize((input_clip[0,...,3:6]+1) * 127.5,(int(512/(1-ratio)),512))  
