@@ -127,7 +127,7 @@ with tf.compat.v1.Session(config=config) as sess:
 
             H2_mat = np.linalg.inv(H2_mat[0])
 
-            size = (width,height)
+            size = (int((width-512*ratio)/(1-ratio)),height)
             input2_warp_H1 = cv.warpPerspective(input2, H2_mat, size)
             input2_warp_one_H1 = cv.warpPerspective(np.ones((512,int(512/(1-ratio)),3))*255, H2_mat, size)
             #reszie to original size
