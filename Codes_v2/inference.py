@@ -149,12 +149,13 @@ with tf.compat.v1.Session(config=config) as sess:
             
 
             # image for other model
-            cv.imwrite(out_path+"mask1/"+str(i+1).zfill(6) + ".jpg", mask1)
-            cv.imwrite(out_path+"mask2/"+str(i+1).zfill(6) + ".jpg", pad_mask2)
-            cv.imwrite(out_path+"mask3/"+str(i+1).zfill(6) + ".jpg", input2_warp_one_H1[:height,:width,:])
-            cv.imwrite(out_path+"warp1/"+str(i+1).zfill(6) + ".jpg", img1)
-            cv.imwrite(out_path+"warp2/"+str(i+1).zfill(6) + ".jpg", pad_img2)
-            cv.imwrite(out_path+"warp3/"+str(i+1).zfill(6) + ".jpg", input2_warp_H1[:height,:width,:])
+            name = data_loader['input1']['frame'][i].split('/')[-1]
+            cv.imwrite(out_path+"mask1/"+name, mask1)
+            cv.imwrite(out_path+"mask2/"+name, pad_mask2)
+            cv.imwrite(out_path+"mask3/"+name, input2_warp_one_H1[:height,:width,:])
+            cv.imwrite(out_path+"warp1/"+name, img1)
+            cv.imwrite(out_path+"warp2/"+name, pad_img2)
+            cv.imwrite(out_path+"warp3/"+name, input2_warp_H1[:height,:width,:])
             #better fusion not needed
                 #img2[gray2<=1]=img1[gray2<=1]
                 #cv.imwrite('img2/'+ str(i+1).zfill(6) + ".jpg", img2)
