@@ -25,3 +25,10 @@ SUMMARY_DIR = "./summary"
 # define the mesh resolution
 GRID_W = 8
 GRID_H = 8
+
+# chop ratio
+RATIO = 0.75
+
+#output image size
+WIDTH = 1200
+HEIGHT = 600

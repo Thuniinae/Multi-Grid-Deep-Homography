@@ -84,11 +84,13 @@ with tf.compat.v1.Session(config=config) as sess:
         if not os.path.exists(out_path+"warp3"):
             os.makedirs(out_path+"warp3")
 
-
+        ratio = constant.RATIO
+        width = constant.WIDTH
+        height = constant.HEIGHT
         for i in range(0, length):
             input_clip = np.expand_dims(data_loader.get_data_clips(i), axis=0)
             #chop input1 left,input2 right 60%
-            ratio = 0.8
+            
             chop_input_clip = input_clip.copy()
             input1 = (input_clip[0,...,0:3]+1) * 127.5  
             input2 = cv.resize((input_clip[0,...,3:6]+1) * 127.5,(int(512/(1-ratio)),512))  
@@ -114,12 +116,13 @@ with tf.compat.v1.Session(config=config) as sess:
             # calculate psnr/ssim
             psnr = skimage.metrics.peak_signal_noise_ratio(chop_input1*final_warp_one, final_warp*final_warp_one, data_range=255)
             ssim = skimage.metrics.structural_similarity(chop_input1*final_warp_one, final_warp*final_warp_one, data_range=255, multichannel=True)
-            
+
             # image fusion
-            img1 = cv.copyMakeBorder(input1, 0,0,0,512, cv.BORDER_CONSTANT, value=0)
+            img1 = cv.copyMakeBorder(input1, 0,height-512,0,width-512, cv.BORDER_CONSTANT, value=0)
             img2 = final_warp*final_warp_one
-            fusion = np.zeros((512,1024,3), np.uint8)
-            mask1 = np.ones((512,1024,1), np.uint8)*255
+            fusion = np.zeros((height,width,3), np.uint8)
+            mask1 = np.zeros((height,width,1), np.uint8)*255
+            mask1[:512,:512,:]=255
             mask2 = final_warp_one*255
 
             H1_mat = np.linalg.inv(H1_mat[0])
@@ -129,7 +132,7 @@ with tf.compat.v1.Session(config=config) as sess:
             border1 = cv.perspectiveTransform(border,H2_mat)[0]
             xmin,ymin=np.min(border1,axis=0)
             xmax,ymax=np.max(border1,axis=0)
-            size = (int(max(xmax,512)),int(max(ymax,512)))
+            size = (int(max(xmax,width)),int(max(ymax,height)))
             input2_warp_H1 = cv.warpPerspective(input2, H2_mat, size)
             input2_warp_one_H1 = cv.warpPerspective(np.ones((512,int(512/(1-ratio)),3))*255, H2_mat, size)
             #reszie to original size
@@ -139,11 +142,11 @@ with tf.compat.v1.Session(config=config) as sess:
             input2_warp_one_H1 = cv.resize(input2_warp_one_H1,(int(input2_warp_H1.shape[1]*(1-ratio)),input2_warp_H1.shape[0]))
 
             #padding
-            pad_img2 = np.zeros((512,1024,3))
-            pad_img2[:,int(512*ratio):int(512*ratio)+img2.shape[1],:] = img2
-            pad_mask2 = np.zeros((512,1024,3))
-            pad_mask2[:,int(512*ratio):int(512*ratio)+img2.shape[1],:] = mask2
-            right = 1024-input2_warp_H1.shape[1]-int(512*ratio)
+            pad_img2 = np.zeros((height,width,3))
+            pad_img2[:512,int(512*ratio):int(512*ratio)+img2.shape[1],:] = img2
+            pad_mask2 = np.zeros((height,width,3))
+            pad_mask2[:512,int(512*ratio):int(512*ratio)+img2.shape[1],:] = mask2
+            right = width-input2_warp_H1.shape[1]-int(512*ratio)
             if right<0:
                 right=0
             input2_warp_H1=cv.copyMakeBorder(input2_warp_H1, 0,0,int(512*ratio),right, cv.BORDER_CONSTANT, value=0)
@@ -153,10 +156,10 @@ with tf.compat.v1.Session(config=config) as sess:
             # image for other model
             cv.imwrite(out_path+"mask1/"+str(i+1).zfill(6) + ".jpg", mask1)
             cv.imwrite(out_path+"mask2/"+str(i+1).zfill(6) + ".jpg", pad_mask2)
-            cv.imwrite(out_path+"mask3/"+str(i+1).zfill(6) + ".jpg", input2_warp_one_H1[:512,:1024,:])
+            cv.imwrite(out_path+"mask3/"+str(i+1).zfill(6) + ".jpg", input2_warp_one_H1[:height,:width,:])
             cv.imwrite(out_path+"warp1/"+str(i+1).zfill(6) + ".jpg", img1)
             cv.imwrite(out_path+"warp2/"+str(i+1).zfill(6) + ".jpg", pad_img2)
-            cv.imwrite(out_path+"warp3/"+str(i+1).zfill(6) + ".jpg", input2_warp_H1[:512,:1024,:])
+            cv.imwrite(out_path+"warp3/"+str(i+1).zfill(6) + ".jpg", input2_warp_H1[:height,:width,:])
             #better fusion not needed
                 #img2[gray2<=1]=img1[gray2<=1]
                 #cv.imwrite('img2/'+ str(i+1).zfill(6) + ".jpg", img2)
