@@ -125,14 +125,9 @@ with tf.compat.v1.Session(config=config) as sess:
             mask1[:512,:512,:]=255
             mask2 = final_warp_one*255
 
-            H1_mat = np.linalg.inv(H1_mat[0])
             H2_mat = np.linalg.inv(H2_mat[0])
 
-            border = np.array([[[0.,0.],[0.,512.],[512./(1-ratio),512.],[512./(1-ratio),0.]]])
-            border1 = cv.perspectiveTransform(border,H2_mat)[0]
-            xmin,ymin=np.min(border1,axis=0)
-            xmax,ymax=np.max(border1,axis=0)
-            size = (int(max(xmax,width)),int(max(ymax,height)))
+            size = (width,height)
             input2_warp_H1 = cv.warpPerspective(input2, H2_mat, size)
             input2_warp_one_H1 = cv.warpPerspective(np.ones((512,int(512/(1-ratio)),3))*255, H2_mat, size)
             #reszie to original size
