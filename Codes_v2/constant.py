@@ -30,5 +30,5 @@ GRID_H = 8
 RATIO = 0.0
 
 #output image size
-WIDTH = 1200
+WIDTH = 600
 HEIGHT = 600
