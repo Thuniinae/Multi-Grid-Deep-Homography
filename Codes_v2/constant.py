@@ -2,7 +2,7 @@
 TRAIN_FOLDER = '../../UDIS-D/training'
 
 #testing dataset path
-TEST_FOLDER = '../../UDIS-D/testing'
+TEST_FOLDER = '../../ivot/testing'
 
 #GPU index
 GPU = '0'
@@ -27,7 +27,7 @@ GRID_W = 8
 GRID_H = 8
 
 # chop ratio
-RATIO = 0.75
+RATIO = 0.70
 
 #output image size
 WIDTH = 1200
